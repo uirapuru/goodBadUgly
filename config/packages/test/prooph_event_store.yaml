@@ -1,0 +1,21 @@
+#prooph_event_store:
+#  stores:
+#    default:
+#      event_store:                  Prooph\EventStore\InMemoryEventStore
+#      repositories:
+#        App\Repository\UserRepository:
+#          snapshot_store:           Prooph\SnapshotStore\InMemorySnapshotStore
+#
+#  projection_managers:
+#    default_projection_manager:
+#      event_store:                  Prooph\EventStore\InMemoryEventStore
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+#  Prooph\SnapshotStore\InMemorySnapshotStore: ~
+#  Prooph\EventStore\InMemoryEventStore: ~
+#  Prooph\EventStore\TransactionalEventStore:          '@Prooph\EventStore\InMemoryEventStore'

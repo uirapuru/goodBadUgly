@@ -1,0 +1,12 @@
+prooph_service_bus:
+
+  event_buses:
+    default:
+      plugins:
+        - 'prooph_service_bus.on_event_invoke_strategy'
+
+      router:
+        type: 'prooph_service_bus.event_bus_router'
+        routes:
+          App\Event\ActivityAdded:
+          - '@App\Projection\ScheduleReadModel'

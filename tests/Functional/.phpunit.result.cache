@@ -1,0 +1,1 @@
+C:30:"PHPUnit\Runner\TestResultCache":156:{a:2:{s:7:"defects";a:1:{s:42:"Tests\Functional\AggregateTest::testAdding";i:5;}s:5:"times";a:1:{s:42:"Tests\Functional\AggregateTest::testAdding";d:4.729;}}}

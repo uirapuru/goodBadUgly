@@ -1,0 +1,77 @@
+parameters:
+    env(MONGODB_DB): user_snapshots
+    mongodb_db: '%env(resolve:MONGODB_DB)%'
+
+prooph_event_store:
+    stores:
+        default:
+            event_store: app.event_store.default
+            repositories:
+                App\Repository\UserRepository:
+                    aggregate_type:           App\Entity\User
+                    aggregate_translator:     Prooph\EventSourcing\EventStoreIntegration\AggregateTranslator
+                    one_stream_per_aggregate: false
+                    snapshot_store:           Prooph\SnapshotStore\MongoDb\MongoDbSnapshotStore
+
+    projection_managers:
+        default_projection_manager:
+            event_store:          Prooph\EventStore\Pdo\MySqlEventStore
+            connection:           Doctrine\DBAL\Driver\PDOConnection
+
+            event_streams_table:  event_streams
+            projections_table:    projections
+
+            projections:
+                schedule:
+                    read_model:       App\Projection\ScheduleReadModel
+                    projection:       App\Projection\ScheduleProjection
+                snapshots:
+                    read_model:       Prooph\Snapshotter\SnapshotReadModel
+                    projection:       App\Projection\SnapshotProjection
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Prooph\EventStore\Pdo\PersistenceStrategy\MySqlSingleStreamStrategy: ~
+    Prooph\EventStore\Pdo\PersistenceStrategy: '@Prooph\EventStore\Pdo\PersistenceStrategy\MySqlSingleStreamStrategy'
+    Prooph\EventStore\Pdo\MySqlEventStore: ~
+    PDO: '@Doctrine\DBAL\Driver\PDOConnection'
+
+    Prooph\EventSourcing\EventStoreIntegration\AggregateTranslator: ~
+    Prooph\EventStore\EventStore: '@prooph_event_store.default'
+
+    mongo.read_concern:
+        class: MongoDB\Driver\ReadConcern
+        arguments:
+            - local
+
+    mongo.write_concern:
+        class: MongoDB\Driver\WriteConcern
+        arguments:
+            - 1
+            - 0
+            - false
+
+    Prooph\SnapshotStore\MongoDb\MongoDbSnapshotStore:
+        arguments:
+            $client: '@MongoDB\Client'
+            $dbName: '%mongodb_db%'
+            $defaultSnapshotGridFsName: 'snapshots'
+            $readConcern: '@mongo.read_concern'
+            $writeConcern: '@mongo.write_concern'
+
+    Prooph\Snapshotter\SnapshotReadModel:
+        arguments:
+            $aggregateTypes: [App\Entity\User]
+            $aggregateRepository: '@App\Repository\UserRepository'
+            $aggregateTranslator: '@Prooph\EventSourcing\EventStoreIntegration\AggregateTranslator'
+            $snapshotStore: '@Prooph\SnapshotStore\MongoDb\MongoDbSnapshotStore'
+
+    read_model_projector.snapshots:
+        class: Prooph\EventStore\Pdo\Projection\PdoEventStoreReadModelProjector
+        arguments:
+            $name: 'snapshots'
+            $readModel: '@Prooph\Snapshotter\SnapshotReadModel'
